@@ -230,55 +230,91 @@ public class BusinessLogic {
         }
     }
 
-    // Overdue Books
-    public static void viewOverdueBooks() {
+//Overdue Books
+public static void viewOverdueBooks() {
 
-        String query =
-                "SELECT LoanID, " +
-                "MemberID, BookID " +
-                "FROM Loans " +
-                "WHERE ReturnDate IS NULL " +
-                "AND LoanDate < " +
-                "CURRENT_DATE - 7 DAYS";
+ String query =
+         "SELECT l.LoanID, " +
+         "l.MemberID, " +
+         "l.BookID, " +
+         "l.LoanDate, " +
+         "b.Title " +
+         "FROM Loans l " +
+         "JOIN Books b " +
+         "ON l.BookID = b.BookID " +
+         "WHERE l.ReturnDate IS NULL";
 
-        try (
-                Connection conn =
-                        ConnectionManager
-                                .getConnection();
+ try (
+         Connection conn =
+                 ConnectionManager
+                         .getConnection();
 
-                PreparedStatement stmt =
-                        conn.prepareStatement(
-                                query)
-        ) {
+         PreparedStatement stmt =
+                 conn.prepareStatement(
+                         query)
+ ) {
 
-            ResultSet rs =
-                    stmt.executeQuery();
+     ResultSet rs =
+             stmt.executeQuery();
 
-            System.out.println(
-                    "\nOverdue Books:"
-            );
+     System.out.println(
+             "\nOverdue Books:"
+     );
 
-            while (rs.next()) {
+     boolean found = false;
 
-                System.out.println(
-                        "LoanID: " +
-                        rs.getInt(
-                                "LoanID")
-                                + " MemberID: "
-                                + rs.getInt(
-                                "MemberID")
-                                + " BookID: "
-                                + rs.getInt(
-                                "BookID")
-                );
-            }
+     while (rs.next()) {
 
-        } catch (Exception e) {
+         Date loanDate =
+                 rs.getDate(
+                         "LoanDate"
+                 );
 
-            System.out.println(
-                    "Error: " +
-                    e.getMessage()
-            );
-        }
-    }
+         long diffMillis =
+                 System.currentTimeMillis()
+                         - loanDate.getTime();
+
+         long days =
+                 diffMillis /
+                         (1000 * 60 * 60 * 24);
+
+         if (days > 7) {
+
+             found = true;
+
+             System.out.println(
+                     "LoanID: "
+                             + rs.getInt(
+                             "LoanID")
+                             + " | MemberID: "
+                             + rs.getInt(
+                             "MemberID")
+                             + " | BookID: "
+                             + rs.getInt(
+                             "BookID")
+                             + " | Book: "
+                             + rs.getString(
+                             "Title")
+                             + " | Loan Date: "
+                             + loanDate
+             );
+         }
+     }
+
+     if (!found) {
+
+         System.out.println(
+                 "No overdue books found."
+         );
+     }
+
+ } catch (Exception e) {
+
+     System.out.println(
+             "Error: " +
+             e.getMessage()
+     );
+ }
 }
+}
+ 
